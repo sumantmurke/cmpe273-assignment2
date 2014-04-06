@@ -1,5 +1,12 @@
 package edu.sjsu.cmpe.library.api.resources;
 
+import javax.jms.Connection;
+import javax.jms.DeliveryMode;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -14,9 +21,14 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.fusesource.stomp.jms.StompJmsConnectionFactory;
+import org.fusesource.stomp.jms.StompJmsDestination;
+
 import com.yammer.dropwizard.jersey.params.LongParam;
 import com.yammer.metrics.annotation.Timed;
 
+import edu.sjsu.cmpe.library.LibraryService;
+import edu.sjsu.cmpe.library.config.StompConfig;
 import edu.sjsu.cmpe.library.domain.Book;
 import edu.sjsu.cmpe.library.domain.Book.Status;
 import edu.sjsu.cmpe.library.dto.BookDto;
@@ -52,6 +64,7 @@ public class BookResource {
 	bookResponse.addLink(new LinkDto("update-book-status", "/books/"
 		+ book.getIsbn(), "PUT"));
 	// add more links
+	bookResponse.addLink(new LinkDto("delete-book","/books/"+ book.getIsbn(),"DELETE"));
 
 	return bookResponse;
     }
@@ -86,9 +99,21 @@ public class BookResource {
     @Timed(name = "update-book-status")
     public Response updateBookStatus(@PathParam("isbn") LongParam isbn,
 	    @DefaultValue("available") @QueryParam("status") Status status) {
-	Book book = bookRepository.getBookByISBN(isbn.get());
+	    
+    	
+    Book book = bookRepository.getBookByISBN(isbn.get());
 	book.setStatus(status);
-
+	System.out.println("before if"+ book.getStatus());
+	if(("lost").equalsIgnoreCase(status.toString())){
+		try {
+	//		System.out.println("after if ");
+			LibraryService.LostBook(isbn.get());
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	BookDto bookResponse = new BookDto(book);
 	String location = "/books/" + book.getIsbn();
 	bookResponse.addLink(new LinkDto("view-book", location, "GET"));
@@ -105,6 +130,7 @@ public class BookResource {
 	bookResponse.addLink(new LinkDto("create-book", "/books", "POST"));
 
 	return bookResponse;
+    
     }
 }
 
