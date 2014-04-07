@@ -1,5 +1,8 @@
 package edu.sjsu.cmpe.library;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
@@ -60,6 +63,7 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 
     	System.out.println("Sending messages to " + StompConfig.getQueue() + "...");
     	String data = libraryName +":"+ lostisbn.toString();
+    	System.out.println("inside lost book libraryName "+ libraryName);
     	TextMessage msg = session.createTextMessage(data);
     	msg.setLongProperty("id", System.currentTimeMillis());
     	producer.send(msg);
@@ -71,7 +75,7 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
     //change finish    	
 
     @Override
-    public void run(LibraryServiceConfiguration configuration,
+    public void run(final LibraryServiceConfiguration configuration,
 	    Environment environment) throws Exception {
 	// This is how you pull the configurations from library_x_config.yml
 	String queueName = configuration.getStompQueueName();
@@ -79,15 +83,41 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 	log.debug("{} - Queue name is {}. Topic name is {}",
 		configuration.getLibraryName(), queueName,
 		topicName);
-	String libraryName = configuration.getLibraryName();
+	libraryName = configuration.getLibraryName();
+	System.out.println("inside run library name is : "+ libraryName);
 	// TODO: Apollo STOMP Broker URL and login
 
+	///run 
+	final BookRepositoryInterface bookRepository = new BookRepository();
+	//bookRepository.Config(configuration);
+	int numThreads = 1;
+	ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
+
+	Runnable backgroundTask = new Runnable() {
+
+	    @Override
+	    public void run() {
+
+	    	while(true){
+	    	Listener listener = new Listener(configuration);
+	    	listener.listenService(bookRepository);
+	    	}
+	    }
+
+	};
+
+	System.out.println("Submitting the background task");
+	executor.execute(backgroundTask);
+	System.out.println("Background task submitted");
+	//executor.shutdown();
+	System.out.println("Done....");
 			
 	
 	/** Root API */
 	environment.addResource(RootResource.class);
 	/** Books APIs */
-	BookRepositoryInterface bookRepository = new BookRepository();
+	//BookRepositoryInterface bookRepository = new BookRepository();
 	environment.addResource(new BookResource(bookRepository));
 
 	/** UI Resources */

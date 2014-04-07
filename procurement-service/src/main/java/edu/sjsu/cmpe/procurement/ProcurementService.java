@@ -1,12 +1,15 @@
 package edu.sjsu.cmpe.procurement;
 
 import java.util.HashMap;
+import java.util.List;
 
 import javax.jms.Connection;
+import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
@@ -27,6 +30,8 @@ import edu.sjsu.cmpe.procurement.api.resources.MessagePublisher;
 import edu.sjsu.cmpe.procurement.api.resources.RootResource;
 import edu.sjsu.cmpe.procurement.config.ProcurementServiceConfiguration;
 import edu.sjsu.cmpe.procurement.config.StompConfig;
+import edu.sjsu.cmpe.procurement.domain.Book;
+import edu.sjsu.cmpe.procurement.jobs.CustomUtill;
 
 public class ProcurementService extends Service<ProcurementServiceConfiguration> {
 
@@ -112,8 +117,40 @@ public class ProcurementService extends Service<ProcurementServiceConfiguration>
     	connection.close();
     	System.out.println("Done");
         }
-
     	
     //changes done	
+    
+    ///changes to do
+    public static void SendPubToTop(List<Book> response) throws JMSException{
+    	
+   	 System.out.println("Publishing the Books to Library through Topic");
+        StompJmsConnectionFactory factory = new StompJmsConnectionFactory();
+        factory.setBrokerURI("tcp://" + StompConfig.getHost() + ":" + StompConfig.getPort());
+
+    	Connection connection = factory.createConnection(StompConfig.getUser(), StompConfig.getPassword());
+        connection.start();
+        
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        String topic="";
+        for(int i=0;i<response.size();i++){
+       	 if(response.get(i).getCategory() != null && response.get(i).getCategory() != "")
+       		 topic = "/topic/03879.book."+response.get(i).getCategory();
+       	 else
+       		 topic = "/topic/03879.book.computer";
+       	
+	         Destination dest = new StompJmsDestination(topic);
+
+	         MessageProducer producer = session.createProducer(dest);
+	         producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+
+	         String data = CustomUtill.ConvertToFormat(response.get(i));
+	         System.out.println("Sending : " + data);
+	         TextMessage msg = session.createTextMessage(data);
+
+	         producer.send(msg);	         
+        }
+ connection.close();
+    	
+    }
     
 }

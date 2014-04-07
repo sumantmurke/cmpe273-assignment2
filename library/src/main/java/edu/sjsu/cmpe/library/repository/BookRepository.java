@@ -105,5 +105,36 @@ public class BookRepository implements BookRepositoryInterface {
     public void delete(Long isbn) {
 	bookInMemoryMap.remove(isbn);
     }
+    public void updateLibraryAfterResponse(Book newBook){
+    	Long isbn = newBook.getIsbn();
+    	List<Book> allBooks = getAllBooks();
+    	for(Book b1 : allBooks){
+    		if(b1.getIsbn() == isbn){
+    			b1.setStatus(Book.Status.available);
+    		}
+    		else
+    		{
+    			Book addedBook = addNewBook(newBook);    			
+    		}
+    	}
+     }
+    
+    public Book addNewBook(Book newBook) {
+    	checkNotNull(newBook, "newBook instance must not be null");
+    	Long isbn =newBook.getIsbn();
+    	 newBook.setIsbn(newBook.getIsbn());
+    	// TODO: create and associate other fields such as author
+
+    	// Finally, save the new book into the map
+    	bookInMemoryMap.putIfAbsent(isbn, newBook);
+
+    	return newBook;
+        }
+    
+    
+    
+    
+    
+    
 
 }
