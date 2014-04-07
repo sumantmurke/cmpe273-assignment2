@@ -55,7 +55,7 @@ public class Listener {
 					if ("SHUTDOWN".equals(receivedData)) {
 						break;
 					}
-					System.out.println("Check the received message.....Message is " + receivedData);					
+					System.out.println("The Received Message is : " + receivedData);					
 
 
 					String args1[] = receivedData.split(":");
@@ -84,7 +84,7 @@ public class Listener {
 					if ("SHUTDOWN".equals(receivedData)) {
 						break;
 					}
-					System.out.println("Check the received message.....Message is " + receivedData);
+					System.out.println("The Received Message is " + receivedData);
 
 				} else {
 					System.out.println("Unexpected message type: "

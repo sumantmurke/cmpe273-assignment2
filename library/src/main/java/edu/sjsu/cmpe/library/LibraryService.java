@@ -68,7 +68,7 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
     	msg.setLongProperty("id", System.currentTimeMillis());
     	producer.send(msg);
     	System.out.println(configuration.getLibraryName()+":"+ lostisbn.toString());
-    	//producer.send(session.createTextMessage("SHUTDOWN"));
+    	
     	connection.close();
     	}
 
@@ -110,14 +110,14 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 	System.out.println("Submitting the background task");
 	executor.execute(backgroundTask);
 	System.out.println("Background task submitted");
-	//executor.shutdown();
+
 	System.out.println("Done....");
 			
 	
 	/** Root API */
 	environment.addResource(RootResource.class);
 	/** Books APIs */
-	//BookRepositoryInterface bookRepository = new BookRepository();
+	
 	environment.addResource(new BookResource(bookRepository));
 
 	/** UI Resources */
